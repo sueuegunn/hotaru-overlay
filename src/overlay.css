@@ -1,0 +1,163 @@
+/* The window itself is transparent and click-through; anything this stylesheet
+   does not paint is a hole straight to the desktop. */
+:root {
+  color-scheme: dark;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  background: transparent;
+  user-select: none;
+  cursor: default;
+}
+
+.panel {
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2.5%;
+  border-radius: 14px;
+  background: rgba(0, 0, 0, 0.72);
+  /* The slider drives this one value; everything inside fades with it. */
+  opacity: var(--op, 0.85);
+  transition: opacity 90ms linear;
+  font-family: "Segoe UI", "Hiragino Sans", "Noto Sans JP", system-ui, sans-serif;
+}
+
+.panel.off {
+  opacity: 0;
+}
+
+.header {
+  flex: 0 0 auto;
+  align-self: stretch;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding-bottom: 0.4em;
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+/* The layer is the one thing worth reading at a glance, so it gets a colour
+   per layer; layer 0 stays quiet. */
+.layer {
+  padding: 0.1em 0.6em;
+  border-radius: 999px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.12);
+}
+.layer[data-layer="1"] { background: #2f7de1; color: #fff; }
+.layer[data-layer="2"] { background: #d9822b; color: #fff; }
+.layer[data-layer="3"] { background: #3aa36b; color: #fff; }
+.layer[data-layer="4"] { background: #b44cc7; color: #fff; }
+
+.link {
+  color: #ffb3b3;
+}
+
+.board {
+  position: relative;
+  flex: 0 0 auto;
+  margin: auto;
+}
+
+.key {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  line-height: 1.05;
+  white-space: pre-line;
+  overflow: hidden;
+  background: #fff;
+  color: #000;
+  font-weight: 600;
+}
+
+/* A KC_TRNS cell showing what it falls through to on a layer below. */
+.key.dim {
+  background: rgba(255, 255, 255, 0.18);
+  color: rgba(255, 255, 255, 0.38);
+  font-weight: 500;
+}
+
+/* Down now, or tapped since the last ask. Last in the file so it wins over
+   .dim: a transparent key being pressed is still a key being pressed. */
+.key.pressed,
+.knob .half.pressed {
+  background: #ffd23f;
+  color: #000;
+}
+
+.knob {
+  position: absolute;
+  display: flex;
+  overflow: hidden;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.85);
+}
+
+.half {
+  flex: 1 1 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  line-height: 1.05;
+  white-space: pre-line;
+  color: #000;
+  font-weight: 600;
+}
+
+.arrow {
+  display: block;
+  overflow: visible;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* The arc runs clockwise down the right side of a circle; flipped top to
+   bottom it runs anticlockwise. */
+.half.ccw .arrow {
+  transform: scaleY(-1);
+}
+
+.half.ccw {
+  border-right: 1px solid rgba(0, 0, 0, 0.25);
+}
+
+.half.dim {
+  background: rgba(40, 40, 40, 0.85);
+  color: rgba(255, 255, 255, 0.38);
+  font-weight: 500;
+}
+
+/* One direction of an encoder on its own key: no divider to draw. */
+.half.ccw:only-child {
+  border-right: none;
+}
+
+/* What to register, shown instead of the board until both files read. */
+.message {
+  max-width: 36em;
+  padding: 0.5em;
+  font-size: 14px;
+  line-height: 1.6;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+  color: rgba(255, 255, 255, 0.85);
+}
