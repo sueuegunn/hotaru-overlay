@@ -104,7 +104,7 @@ pub fn build(app: &AppHandle) -> tauri::Result<()> {
         ],
     )?;
 
-    let builder = TrayIconBuilder::with_id("keymap-overlay")
+    let builder = TrayIconBuilder::with_id("hotaru-overlay")
         .menu(&menu)
         .on_menu_event(on_menu_event);
 
@@ -200,9 +200,9 @@ pub fn refresh(app: &AppHandle) {
     let name = app.state::<state::AppState>().files.lock().unwrap().layout.as_ref().map(|l| l.name.clone());
     let name = name.filter(|n| !n.is_empty()).map(|n| format!(" [{n}]")).unwrap_or_default();
     let _ = tray.icon.set_tooltip(Some(if s.enabled {
-        format!("keymap overlay{name} - 表示中 (Layer {}){link}", s.layer)
+        format!("hotaru overlay{name} - 表示中 (Layer {}){link}", s.layer)
     } else {
-        format!("keymap overlay{name} - 非表示{link}")
+        format!("hotaru overlay{name} - 非表示{link}")
     }));
 
     // macOS only; documented as a no-op on Windows.
@@ -283,6 +283,6 @@ pub fn error(app: &AppHandle, message: &str) {
     app.dialog()
         .message(message)
         .kind(MessageDialogKind::Error)
-        .title("keymap overlay")
+        .title("hotaru overlay")
         .show(|_| {});
 }

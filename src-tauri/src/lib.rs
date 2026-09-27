@@ -49,7 +49,7 @@ pub fn run() {
             Ok(())
         })
         .build(tauri::generate_context!())
-        .expect("error while building keymap overlay")
+        .expect("error while building hotaru overlay")
         .run(|_app, event| {
             // Nothing here closes the overlay window, so this should never
             // fire on its own - but a tray app that quits because a window

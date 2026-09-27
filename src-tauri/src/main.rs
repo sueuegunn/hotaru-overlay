@@ -2,5 +2,5 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 fn main() {
-    keymap_overlay_lib::run()
+    hotaru_overlay_lib::run()
 }

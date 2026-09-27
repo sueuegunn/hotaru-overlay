@@ -1,4 +1,6 @@
-# keymap overlay
+# hotaru overlay
+
+蛍（hotaru）のように、押したキーが暗がりにぽっと灯る。
 
 VIA 対応キーボードのキーマップを画面に半透明で出す常駐アプリ。**いまのレイヤー**と
 **押しているキー**が見える。[Tauri v2](https://v2.tauri.app/)。Windows / macOS。

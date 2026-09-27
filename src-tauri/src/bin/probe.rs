@@ -6,7 +6,7 @@
 //! knob and `knob` flashes 1 (CCW) or 2 (CW). Ctrl+C to stop.
 
 use hidapi::HidApi;
-use keymap_overlay_lib::{hid, layout};
+use hotaru_overlay_lib::{hid, layout};
 
 fn main() {
     let Some(path) = std::env::args().nth(1) else {

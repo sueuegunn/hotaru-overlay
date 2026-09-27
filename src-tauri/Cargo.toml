@@ -1,14 +1,14 @@
 [package]
-name = "keymap-overlay"
+name = "hotaru-overlay"
 version = "0.1.0"
 description = "Keymap overlay for VIA keyboards"
 authors = ["sueuegunn"]
 edition = "2021"
 # probe (src/bin) is a second binary; `tauri dev` must still start this one.
-default-run = "keymap-overlay"
+default-run = "hotaru-overlay"
 
 [lib]
-name = "keymap_overlay_lib"
+name = "hotaru_overlay_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]

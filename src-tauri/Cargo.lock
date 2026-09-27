@@ -1281,6 +1281,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "hotaru-overlay"
+version = "0.1.0"
+dependencies = [
+ "hidapi",
+ "serde",
+ "serde_json",
+ "tauri",
+ "tauri-build",
+ "tauri-plugin-autostart",
+ "tauri-plugin-dialog",
+]
+
+[[package]]
 name = "html5ever"
 version = "0.38.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1735,19 +1748,6 @@ dependencies = [
  "bitflags 2.13.1",
  "serde",
  "unicode-segmentation",
-]
-
-[[package]]
-name = "keymap-overlay"
-version = "0.1.0"
-dependencies = [
- "hidapi",
- "serde",
- "serde_json",
- "tauri",
- "tauri-build",
- "tauri-plugin-autostart",
- "tauri-plugin-dialog",
 ]
 
 [[package]]
