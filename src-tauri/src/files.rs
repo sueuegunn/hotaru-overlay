@@ -3,7 +3,8 @@
 //! Nothing about any keyboard is built in. The paths live in the settings
 //! file, so once registered they are what the app starts with; until then the
 //! overlay says what to register instead of drawing. Both files are re-read
-//! whenever their mtime moves, so saving from VIA shows up within a second.
+//! whenever their mtime or size moves, so saving from VIA shows up within a
+//! second.
 
 use std::path::{Path, PathBuf};
 use std::sync::atomic::Ordering;
@@ -121,21 +122,26 @@ pub fn first_run(app: &AppHandle) {
     }
 }
 
-fn mtimes(app: &AppHandle) -> [Option<SystemTime>; 2] {
+/// A file's mtime and size. The size is there for a browser's save: Chrome
+/// empties the chosen file first and writes it later, and the second step
+/// can keep the first step's mtime, which alone left the empty read standing.
+type Stamp = Option<(SystemTime, u64)>;
+
+fn stamps(app: &AppHandle) -> [Stamp; 2] {
     let (lp, kp) = paths(app);
-    let m = |p: Option<PathBuf>| p.and_then(|p| std::fs::metadata(p).and_then(|m| m.modified()).ok());
+    let m = |p: Option<PathBuf>| p.and_then(|p| std::fs::metadata(p).ok()).and_then(|m| Some((m.modified().ok()?, m.len())));
     [m(lp), m(kp)]
 }
 
-/// Poll both mtimes once a second and reload when either moves. A new
+/// Poll both stamps once a second and reload when either moves. A new
 /// registration moves them too, which only costs one extra read.
 pub fn watch(app: &AppHandle) {
     let app = app.clone();
     std::thread::spawn(move || {
-        let mut seen = mtimes(&app);
+        let mut seen = stamps(&app);
         loop {
             std::thread::sleep(Duration::from_secs(1));
-            let now = mtimes(&app);
+            let now = stamps(&app);
             if now != seen {
                 seen = now;
                 // VIA writes the file in one go, but give a slow writer a beat.
