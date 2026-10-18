@@ -19,7 +19,9 @@ tauri-build = { version = "2", features = [] }
 # image-png is what lets Image::from_bytes take the include_bytes!'d tray icons.
 tauri = { version = "2", features = ["macos-private-api", "tray-icon", "image-png"] }
 # The keyboard is asked over VIA's raw HID interface (usage page 0xFF60).
-hidapi = "2"
+# macos-shared-device: open it without seizing it, so VIA (or a browser)
+# holding the same interface does not lock us out, nor we them.
+hidapi = { version = "2", features = ["macos-shared-device"] }
 tauri-plugin-dialog = "2"
 tauri-plugin-autostart = "2"
 serde = { version = "1", features = ["derive"] }
