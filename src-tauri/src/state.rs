@@ -24,6 +24,10 @@ pub struct Settings {
     /// files written before it existed, hence the default.
     #[serde(default)]
     pub position: Position,
+    /// Which keyboard layout the OS reads the keycodes with. Missing from
+    /// settings files written before it existed, hence the default.
+    #[serde(default)]
+    pub host_layout: HostLayout,
     /// The VIA definition registered from the tray: where the keys are.
     #[serde(default)]
     pub layout_file: Option<PathBuf>,
@@ -34,7 +38,49 @@ pub struct Settings {
 
 impl Default for Settings {
     fn default() -> Self {
-        Self { enabled: true, opacity: 0.85, position: Position::default(), layout_file: None, keymap_file: None }
+        Self {
+            enabled: true,
+            opacity: 0.85,
+            position: Position::default(),
+            host_layout: HostLayout::default(),
+            layout_file: None,
+            keymap_file: None,
+        }
+    }
+}
+
+/// The OS keyboard layout the legends are read in. A keycode names a key's
+/// place, not its character: KC_SCLN types ";" either way, but shifted it is
+/// ":" on US and "+" on JIS. The keyboard cannot tell, so the user picks.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum HostLayout {
+    #[default]
+    Us,
+    Jis,
+}
+
+impl HostLayout {
+    /// The order of the tray menu.
+    pub const ALL: [HostLayout; 2] = [HostLayout::Us, HostLayout::Jis];
+
+    /// Also what the overlay page receives (src/keycodes.ts's HostLayout).
+    pub fn id(self) -> &'static str {
+        match self {
+            HostLayout::Us => "us",
+            HostLayout::Jis => "jis",
+        }
+    }
+
+    pub fn from_id(id: &str) -> Option<HostLayout> {
+        HostLayout::ALL.into_iter().find(|h| h.id() == id)
+    }
+
+    pub fn label(self) -> &'static str {
+        match self {
+            HostLayout::Us => "US",
+            HostLayout::Jis => "JIS",
+        }
     }
 }
 
@@ -156,6 +202,7 @@ impl AppState {
 pub struct StatePayload {
     pub enabled: bool,
     pub opacity: f64,
+    pub host_layout: HostLayout,
     /// The layer on top - the one whose legends are drawn.
     pub layer: u8,
     /// Every layer that is on, bit n = layer n. KC_TRNS falls through these.
@@ -214,6 +261,7 @@ pub fn snapshot(app: &AppHandle) -> StatePayload {
     StatePayload {
         enabled: settings.enabled,
         opacity: settings.opacity,
+        host_layout: settings.host_layout,
         layer: top_layer(active),
         active,
         debug_layer,
@@ -282,9 +330,19 @@ mod tests {
     }
 
     #[test]
+    fn host_layouts_spell_one_way() {
+        for h in HostLayout::ALL {
+            assert_eq!(HostLayout::from_id(h.id()), Some(h));
+            // The menu id, the settings file and the page all spell it the same way.
+            assert_eq!(serde_json::to_string(&h).unwrap(), format!("\"{}\"", h.id()));
+        }
+    }
+
+    #[test]
     fn old_settings_files_still_load() {
         let s: Settings = serde_json::from_str(r#"{"enabled":false,"opacity":0.5}"#).unwrap();
         assert_eq!(s.position, Position::Center);
+        assert_eq!(s.host_layout, HostLayout::Us);
         assert!(!s.enabled);
         assert!(s.layout_file.is_none() && s.keymap_file.is_none());
     }

@@ -73,13 +73,41 @@ const BASE: Record<string, string> = {
   QK_REBOOT: "Reboot", QK_CLEAR_EEPROM: "EEclr", EE_CLR: "EEclr",
 };
 
+/**
+ * The OS keyboard layout the keycodes are read in (src-tauri's HostLayout).
+ * A keycode names a key's place, so the same KC_SCLN shifted is ":" on US and
+ * "+" on JIS.
+ */
+export type HostLayout = "us" | "jis";
+
+// Where JIS prints something else than BASE: the keys right of P, L and 0.
+// The ろ key types \ (BASE shows its shifted _, which US cannot type).
+const JIS_BASE: Record<string, string> = {
+  KC_EQUAL: "^", KC_EQL: "^",
+  KC_LEFT_BRACKET: "@", KC_LBRC: "@", KC_RIGHT_BRACKET: "[", KC_RBRC: "[",
+  KC_BACKSLASH: "]", KC_BSLS: "]", KC_NONUS_HASH: "]", KC_NUHS: "]",
+  KC_QUOTE: ":", KC_QUOT: ":", KC_GRAVE: "半全", KC_GRV: "半全",
+  KC_INTERNATIONAL_1: "\\", KC_INT1: "\\", KC_RO: "\\",
+};
+
 // Shifted symbols, so LSFT(KC_9) prints "(" rather than "S-9".
-const SHIFTED: Record<string, string> = {
-  KC_1: "!", KC_2: "@", KC_3: "#", KC_4: "$", KC_5: "%",
-  KC_6: "^", KC_7: "&", KC_8: "*", KC_9: "(", KC_0: ")",
-  KC_MINS: "_", KC_MINUS: "_", KC_EQL: "+", KC_EQUAL: "+",
-  KC_LBRC: "{", KC_RBRC: "}", KC_BSLS: "|", KC_SCLN: ":",
-  KC_QUOT: '"', KC_GRV: "~", KC_COMM: "<", KC_DOT: ">", KC_SLSH: "?",
+const SHIFTED: Record<HostLayout, Record<string, string>> = {
+  us: {
+    KC_1: "!", KC_2: "@", KC_3: "#", KC_4: "$", KC_5: "%",
+    KC_6: "^", KC_7: "&", KC_8: "*", KC_9: "(", KC_0: ")",
+    KC_MINS: "_", KC_MINUS: "_", KC_EQL: "+", KC_EQUAL: "+",
+    KC_LBRC: "{", KC_RBRC: "}", KC_BSLS: "|", KC_SCLN: ":",
+    KC_QUOT: '"', KC_GRV: "~", KC_COMM: "<", KC_DOT: ">", KC_SLSH: "?",
+  },
+  // Shift+0 types nothing on JIS, so KC_0 is left to print "⇧0".
+  jis: {
+    KC_1: "!", KC_2: '"', KC_3: "#", KC_4: "$", KC_5: "%",
+    KC_6: "&", KC_7: "'", KC_8: "(", KC_9: ")",
+    KC_MINS: "=", KC_MINUS: "=", KC_EQL: "~", KC_EQUAL: "~",
+    KC_LBRC: "`", KC_RBRC: "{", KC_BSLS: "}", KC_NUHS: "}",
+    KC_SCLN: "+", KC_QUOT: "*", KC_COMM: "<", KC_DOT: ">", KC_SLSH: "?",
+    KC_INT1: "_", KC_RO: "_", KC_INT3: "|", KC_JYEN: "|",
+  },
 };
 
 const MOD_PREFIX: Record<string, string> = {
@@ -120,10 +148,11 @@ function call(code: string): [string, string[]] | null {
  * Legend for one keycode. A "\n" in the result is a deliberate second line
  * (hold action on top, tap action below) - the overlay renders it as such.
  */
-export function legend(code: string | undefined | null): string {
+export function legend(code: string | undefined | null, host: HostLayout = "us"): string {
   if (code === undefined || code === null) return "";
   const raw = String(code).trim();
   if (raw === "" || raw === "-1") return "";
+  if (host === "jis" && raw in JIS_BASE) return JIS_BASE[raw];
   if (raw in BASE) return BASE[raw];
 
   const c = call(raw);
@@ -143,11 +172,11 @@ export function legend(code: string | undefined | null): string {
       case "OSL":
         return `OSL${args[0]}`;
       case "LT":
-        return `L${args[0]}\n${legend(args[1])}`;
+        return `L${args[0]}\n${legend(args[1], host)}`;
       case "LM":
         return `L${args[0]}\n${MOD_PREFIX[args[1]] ?? args[1]}`;
       case "MT":
-        return `${MOD_PREFIX[args[0]] ?? args[0]}\n${legend(args[1])}`;
+        return `${MOD_PREFIX[args[0]] ?? args[0]}\n${legend(args[1], host)}`;
       case "OSM":
         return `${MOD_PREFIX[args[0]] ?? args[0]}\nOS`;
       case "TD":
@@ -155,11 +184,11 @@ export function legend(code: string | undefined | null): string {
       case "MACRO":
         return `M${args[0]}`;
     }
-    if (fn in MOD_TAP) return `${MOD_TAP[fn]}\n${legend(args[0])}`;
+    if (fn in MOD_TAP) return `${MOD_TAP[fn]}\n${legend(args[0], host)}`;
     if (fn in MOD_PREFIX) {
       const inner = args[0];
-      const shifted = MOD_PREFIX[fn] === "⇧" ? SHIFTED[inner] : undefined;
-      return shifted ?? `${MOD_PREFIX[fn]}${legend(inner)}`;
+      const shifted = MOD_PREFIX[fn] === "⇧" ? SHIFTED[host][inner] : undefined;
+      return shifted ?? `${MOD_PREFIX[fn]}${legend(inner, host)}`;
     }
     return raw;
   }

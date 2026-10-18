@@ -20,7 +20,7 @@ use tauri_plugin_autostart::ManagerExt;
 use tauri_plugin_dialog::{DialogExt, MessageDialogKind};
 
 use crate::actions;
-use crate::state::{self, Link, Position};
+use crate::state::{self, HostLayout, Link, Position};
 
 const ICON_ON: &[u8] = include_bytes!("../icons/tray-on.png");
 const ICON_OFF: &[u8] = include_bytes!("../icons/tray-off.png");
@@ -36,6 +36,7 @@ pub struct Tray {
     enabled: CheckMenuItem<Wry>,
     opacity: Vec<(u8, CheckMenuItem<Wry>)>,
     positions: Vec<(Position, CheckMenuItem<Wry>)>,
+    host_layouts: Vec<(HostLayout, CheckMenuItem<Wry>)>,
     layer_menu: Submenu<Wry>,
     /// Rebuilt whenever the keymap's layer count changes.
     layers: Mutex<Vec<(Option<u8>, CheckMenuItem<Wry>)>>,
@@ -77,8 +78,24 @@ pub fn build(app: &AppHandle) -> tauri::Result<()> {
         })
         .collect::<tauri::Result<_>>()?;
 
+    let host_layouts: Vec<(HostLayout, CheckMenuItem<Wry>)> = HostLayout::ALL
+        .iter()
+        .map(|h| {
+            let item = CheckMenuItem::with_id(
+                app,
+                format!("host_layout:{}", h.id()),
+                h.label(),
+                true,
+                false,
+                None::<&str>,
+            )?;
+            Ok((*h, item))
+        })
+        .collect::<tauri::Result<_>>()?;
+
     let opacity_menu = Submenu::with_items(app, "透明度", true, &refs(&opacity))?;
     let position_menu = Submenu::with_items(app, "位置", true, &refs(&positions))?;
+    let host_layout_menu = Submenu::with_items(app, "配列", true, &refs(&host_layouts))?;
     let layer_menu = Submenu::with_items(app, "レイヤー", true, &[])?;
     let pick_layout = MenuItem::with_id(app, "pick_layout", "配置ファイルを選ぶ…", true, None::<&str>)?;
     let pick_keymap = MenuItem::with_id(app, "pick_keymap", "キーマップを選ぶ…", true, None::<&str>)?;
@@ -92,6 +109,7 @@ pub fn build(app: &AppHandle) -> tauri::Result<()> {
             &enabled,
             &opacity_menu,
             &position_menu,
+            &host_layout_menu,
             &layer_menu,
             &PredefinedMenuItem::separator(app)?,
             &pick_layout,
@@ -125,6 +143,7 @@ pub fn build(app: &AppHandle) -> tauri::Result<()> {
         enabled,
         opacity,
         positions,
+        host_layouts,
         layer_menu,
         layers: Mutex::new(Vec::new()),
         autostart,
@@ -185,6 +204,9 @@ pub fn refresh(app: &AppHandle) {
     let position = app.state::<state::AppState>().settings.lock().unwrap().position;
     for (p, item) in &tray.positions {
         let _ = item.set_checked(*p == position);
+    }
+    for (h, item) in &tray.host_layouts {
+        let _ = item.set_checked(*h == s.host_layout);
     }
     for (layer, item) in tray.layers.lock().unwrap().iter() {
         let _ = item.set_checked(*layer == s.debug_layer);
@@ -252,6 +274,8 @@ fn on_menu_event(app: &AppHandle, event: MenuEvent) {
                 actions::set_opacity(app, f64::from(pct) / 100.0);
             } else if let Some(p) = id.strip_prefix("position:").and_then(Position::from_id) {
                 actions::set_position(app, p);
+            } else if let Some(h) = id.strip_prefix("host_layout:").and_then(HostLayout::from_id) {
+                actions::set_host_layout(app, h);
             } else if let Some(layer) = id.strip_prefix("layer:") {
                 // "layer:auto" parses to None, which is what auto means here.
                 actions::set_debug_layer(app, layer.parse::<u8>().ok());

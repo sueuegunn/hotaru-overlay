@@ -3,6 +3,8 @@
 // setters here.
 import { invoke } from "@tauri-apps/api/core";
 
+import type { HostLayout } from "./keycodes";
+
 export type Link =
   | { kind: "down" }
   | { kind: "up" }
@@ -12,6 +14,8 @@ export type Link =
 export type StatePayload = {
   enabled: boolean;
   opacity: number;
+  /** Which layout the legends are read in. */
+  host_layout: HostLayout;
   /** The layer on top, whose legends are drawn. */
   layer: number;
   /** Bit n = layer n is on. KC_TRNS falls through these. */

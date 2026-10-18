@@ -7,7 +7,7 @@ use tauri::{AppHandle, Manager};
 
 use crate::files::{self, Which};
 use crate::overlay;
-use crate::state::{self, AppState, Position};
+use crate::state::{self, AppState, HostLayout, Position};
 
 pub fn set_enabled(app: &AppHandle, enabled: bool) {
     app.state::<AppState>().settings.lock().unwrap().enabled = enabled;
@@ -32,6 +32,12 @@ pub fn set_position(app: &AppHandle, position: Position) {
     if let Some(win) = app.get_webview_window("overlay") {
         let _ = overlay::place(&win, position);
     }
+    state::publish(app);
+}
+
+pub fn set_host_layout(app: &AppHandle, host_layout: HostLayout) {
+    app.state::<AppState>().settings.lock().unwrap().host_layout = host_layout;
+    state::persist(app);
     state::publish(app);
 }
 

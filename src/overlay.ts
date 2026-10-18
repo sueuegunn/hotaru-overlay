@@ -45,7 +45,7 @@ function resolve(pick: (layer: number) => string | undefined): { text: string; d
   for (let l = current.layer; l >= 0; l--) {
     if (l !== current.layer && !(current.active & (1 << l))) continue;
     const code = pick(l);
-    if (!isTransparent(code)) return { text: legend(code), dim: l !== current.layer };
+    if (!isTransparent(code)) return { text: legend(code, current.host_layout), dim: l !== current.layer };
   }
   return { text: "", dim: false };
 }
@@ -236,7 +236,14 @@ function settle(now: number) {
 
 /** Everything a keycap's legend depends on, besides the keymap itself. */
 function face(): string {
-  return [current.enabled, current.layer, current.active, current.debug_layer, JSON.stringify(current.link)].join();
+  return [
+    current.enabled,
+    current.layer,
+    current.active,
+    current.debug_layer,
+    current.host_layout,
+    JSON.stringify(current.link),
+  ].join();
 }
 
 function render() {
